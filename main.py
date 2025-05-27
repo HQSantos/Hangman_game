@@ -10,6 +10,7 @@ def main():
         print('0: Todas as letras   1: Fácil')
         print('2: Médio             3: Difícil')
         letter = input('').lower()
+        print("\n" * 100) 
         jogo.startgame(letter)
         print('Deseja jogar novamente?:')
         print('1-Sim:')

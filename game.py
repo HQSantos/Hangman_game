@@ -19,54 +19,25 @@ class Jogo:
     self.maxtries = 7
     self.tries = 0
 
-  def remover_acentos(self,palavra):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', palavra)
-        if unicodedata.category(c) != 'Mn'
-    )
-
   def startgame(self, difficulty):   
     #Funções locais para evitar o uso repetitivo do self.
-    def validate_words():
-      words = []
-      #se acertar a palavra inteira em uma única tentativa         
-      #Se tentou colocar uma palavra inteira e errou
+    def validate_input():
       if len(letter) > 1:
-        for char in letter:  # Itera sobre cada caractere da palavra digitada
-          if char in gameword:
-            # Revela todas as posições onde o caractere aparece em gameword
-            for i in range(len(gameword)):
-                if gameword[i] == char:
-                    self.wordshow[i] = gameword[i]
-                    if char not in words:
-                        words.append(char)
-          else:
-            # Se a letra não está em gameword, adiciona às incorretas
-            if char not in wrongletters:
-                wrongletters.append(char)
-                self.tries += 1
-                print(f"Letra {char} é incorreta")
-        print("Letras corretas:", ', '.join(words))
-        #se houver apenas uma letra no input
+        self.full_word_validate(letter, gameword, wrongletters)
       else:
-        if letter not in gameword.lower():
-          wrongletters.append(letter)
-          self.tries += 1
-          print("Resposta incorreta!")
-        else:
-          print("Certa resposta!")
-          for i in range(len(gameword)):
-            if gameword[i].lower() == letter:
-              self.wordshow[i] = gameword[i]
-    #===============================================================
+        self.single_letter_validate(letter, gameword, wrongletters)
+        
+
     def gamewon():
       gamestate = 2
       winstate = 1
-    #================================================================
+      
+
     def gameover():
       gamestate = 2
       winstate = 2
-    #================================================================    
+
+
     wrongletters = []
     self.tries = 0
     self.wordshow = []
@@ -110,23 +81,29 @@ class Jogo:
       print("A palavra é:", ' '.join(self.wordshow))
       print('Dica:',hint)
 
-      Print.print_hanger(Print,self.tries)
+      Print.print_hanger(Print,self.tries) # type: ignore
       print('Letras erradas:',','.join(wrongletters))
 
       letter = input('Coloque uma letra ou palavra: ').lower()
       print("\n" * 100)    
+
+      #se acertar a palavra inteira em uma única tentativa   
       if letter == gameword:
         gamewon()
+        print('Você venceu!')
         break
+      #evitar precisar passar pelo loop novamente
       if letter in wrongletters and len(letter) == 1:
         print("Você já tentou essa letra.")    
+        continue
       elif not letter.isalpha():
         print("Não é permitido números ou caracteres especiais, apenas letras.")
+        continue
       if len(letter) > len(gameword):
         print("A palavra digitada é maior que a palavra do jogo")
         continue
       else:
-        validate_words()
+        validate_input()
 
       if self.tries >= self.maxtries:
         gameover()
@@ -136,3 +113,47 @@ class Jogo:
         break
     
     print('Fim de jogo! A palavra era:', gameword)
+
+
+
+  def remover_acentos(self,palavra):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', palavra)
+        if unicodedata.category(c) != 'Mn'
+    )
+  
+  
+  
+  def reveal_correct_positions(self, char, gameword):
+    # Revela todas as posições onde o caractere aparece em gameword
+    for i, game_char in enumerate(gameword):
+        if game_char == char:
+            self.wordshow[i] = game_char
+
+
+
+  def full_word_validate(self, input_word, gameword, wrongletters):
+      correct_letters = set()
+      # Itera sobre cada caractere da palavra digitada
+      for char in input_word:
+          # Se a letra está em gameword, adiciona às corretas
+          if char in gameword:
+              self.reveal_correct_positions(char, gameword)
+              correct_letters.add(char)
+              
+          #Se tentou colocar uma palavra inteira e errou
+          elif char not in wrongletters:
+              wrongletters.append(char)
+              self.tries += 1
+              print(f"'{char}' não está na palavra.")
+      if correct_letters:
+          print(f"Letras corretas: {', '.join(sorted(correct_letters))}")
+
+  def single_letter_validate(self, letter, gameword, wrongletters):
+      if letter in gameword:
+          print(f"'{letter}' está na palavra!")
+          self.reveal_correct_positions(letter, gameword)
+      elif letter not in wrongletters:
+          wrongletters.append(letter)
+          self.tries += 1
+          print(f"'{letter}' não está na palavra.")

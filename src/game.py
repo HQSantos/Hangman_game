@@ -12,14 +12,14 @@ import math
 class Jogo:
   def __init__(self) -> None:
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_path = os.path.join(script_dir, 'dados.csv')
+    csv_path = os.path.join(script_dir, '..', 'assets', 'dados.csv')
     self.dados = pd.read_csv(csv_path).values.tolist()
     self.wordshow = []
     self.realword = []
     self.maxtries = 7
     self.tries = 0
 
-  def startgame(self, difficulty):   
+  def StartGame(self, difficulty):   
     #Funções locais para evitar o uso repetitivo do self.
     def validate_input():
       if len(letter) > 1:
@@ -148,6 +148,8 @@ class Jogo:
               print(f"'{char}' não está na palavra.")
       if correct_letters:
           print(f"Letras corretas: {', '.join(sorted(correct_letters))}")
+
+          
 
   def single_letter_validate(self, letter, gameword, wrongletters):
       if letter in gameword:

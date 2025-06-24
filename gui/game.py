@@ -1,21 +1,26 @@
+import sys
 import unicodedata
 import pandas as pd
-import random as rnd
 import os
 import random as rnd
-from draws import Printer # type: ignore
-from getpass import getpass
+from draws import Printer
 from IA import GeminiClient
 import tkinter as tk
 from game_screen import Screen
-
+import threading
 class Jogo:
-    def __init__(self, menu):  
+    def __init__(self, menu):
         self.menu = menu
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        csv_path = os.path.join(script_dir, '..', 'assets', 'dados.csv')
-        self.dados = pd.read_csv(csv_path).values.tolist()
-        self.tela = Screen()
+        if hasattr(sys, '_MEIPASS'):
+            base_dir = sys._MEIPASS
+        else:
+            base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        csv_path = os.path.join(base_dir, "assets", "dados.csv")
+
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            self.dados = pd.read_csv(f).values.tolist()
+
+        self.tela = Screen(menu.root)
         self.wordshow = []
         self.realword = []
         self.wrongletters = []
@@ -25,6 +30,7 @@ class Jogo:
         self.winstate = False
         self.gameword = ''
         self.difficulty = ''
+        self.tela.root.protocol("WM_DELETE_WINDOW", self.fechar_tudo)
 
 
     def NewGame(self):
@@ -41,14 +47,13 @@ class Jogo:
     
 
     def ChangeDifficulty(self):
-        from main import TelaInicial   # type: ignore
-        self.tela.root.destroy()
+        from main import TelaInicial
+        self.tela.root.withdraw()
 
         new_root = tk.Tk()
         new_menu = TelaInicial(new_root)
         Screen.CenterScreen(new_root, 250, 200)
-        new_menu.setup_ui()
-        new_root.mainloop()
+        #new_menu.setup_ui()
 
 
 
@@ -80,7 +85,11 @@ class Jogo:
         
         self.gameword = self.RemoveAccent()
         cliente = GeminiClient()
-        self.tela.total_letters_var.set(f"Total de letras: {len(self.gameword)}\nDica: {cliente.call(self.gameword)  }")
+        palavra = cliente.call(self.gameword)
+        if palavra:
+            self.carregar_dica_em_background()
+        else:
+            self.tela.total_letters_var.set(f"Total de letras: {len(self.gameword)}\nDica: {cliente.call(self.gameword)  }")
         self.tela.word_var.set(' '.join(self.wordshow))
         self.SetupScreen(self.tela)
         self.tela.root.mainloop()
@@ -133,6 +142,7 @@ class Jogo:
         tela.mudar_dificuldade_button.config(command=lambda: self.ChangeDifficulty())
         tela.entry.bind("<Return>",  lambda event: (self.SendWord(tela.entry.get().lower()), tela.entry.delete(0, tk.END)))
         tela.tentar_button.config(command=lambda: (self.SendWord(tela.entry.get().lower()), tela.entry.delete(0, tk.END)))
+        self.tries = 0
         self.tk_image = Printer.PrintHanger(self.tries)
         tela.image_label.config(image=self.tk_image)
         self.tela.message_var.set('')
@@ -205,3 +215,21 @@ class Jogo:
 
     def SetWinState(self, value):        
         self.winstate = value
+
+
+    def fechar_tudo(self):
+        self.tela.root.destroy()
+        self.menu.root.destroy()
+        sys.exit()
+
+
+    def carregar_dica_em_background(self):
+        def task():
+            cliente = GeminiClient()
+            dica = cliente.call(self.gameword)
+            self.tela.total_letters_var.set(
+                f"Total de letras: {len(self.gameword)}\nDica: {dica}"
+            )
+
+        threading.Thread(target=task).start()
+

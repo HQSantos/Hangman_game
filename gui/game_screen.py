@@ -1,14 +1,16 @@
-
+import sys
 import tkinter as tk
 
 class Screen:
-    def __init__(self) -> None:
-      root = tk.Tk()
-      root.title("Jogo da Forca")
-      root.configure(background='light gray')
+    def __init__(self, parent = None, root = None) -> None:
+      if root is None:
+        self.root = tk.Toplevel()
+      else:
+        self.root = root
+      self.root.title("Jogo da Forca")
+      self.root.configure(background='light gray')
 
-      self.root = root
-
+      Screen.CenterScreen(self.root, 1000, 600)
       self.root.grid_columnconfigure(0, weight=1)
       self.root.grid_columnconfigure(1, weight=1)
       self.root.grid_columnconfigure(2, weight=1)
@@ -91,9 +93,8 @@ class Screen:
       self.right_frame = tk.Frame(self.root, bg='light gray')
       self.right_frame.grid(row=0, column=2, sticky='nsew', padx=10, pady=10)
 
-      self.image_label = tk.Label(self.right_frame, text="Imagem do Personagem", bg='black', fg='white', width=360, height=450,)
+      self.image_label = tk.Label(self.right_frame, width=360, height=450,)
       self.image_label.pack(expand=True, pady=20)
-      
 
     @staticmethod
     def CenterScreen(janela, largura, altura):

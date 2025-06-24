@@ -3,14 +3,18 @@ import os
 
 class GeminiClient:
     def __init__(self):
-        # Obtém a chave API da variável de ambiente
-        self.api_key = os.environ.get('GEMINI_API_KEY')
-        if not self.api_key:
-            raise ValueError("A variável de ambiente GEMINI_API_KEY não está definida.")
+        try:
+            self.api_key = os.environ.get('GEMINI_API_KEY')
+        except Exception:
+            print("Erro ao obter a chave da API Gemini. Certifique-se de que a variável de ambiente 'GEMINI_API_KEY' está definida.")
+            self.api_key = None
         self.model = 'gemini-1.5-flash' 
         self.endpoint = f'https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}'
 
+
     def call(self, word):
+        if not self.api_key or not self.endpoint:
+            return "Sem dica"
         # Prompt para gerar uma dica no jogo da forca
         prompt = (
             "Você é uma inteligência artificial em um jogo da forca.\n"
@@ -40,12 +44,9 @@ class GeminiClient:
             # Extrai a dica da resposta
             hint = result['candidates'][0]['content']['parts'][0]['text']
             return hint.strip()
-        except requests.exceptions.RequestException as e:
-            print(f"Erro na requisição: {e}")
-            return None
-        except KeyError:
-            print("Erro ao processar a resposta da API.")
-            return None
+        except Exception:
+            print("Erro ao chamar a API Gemini, cota atingiu o limite máximo")
+            return "Sem dica"
 
 # Exemplo de uso
 if __name__ == "__main__":
